@@ -24,8 +24,17 @@ func main() {
 	verbose := pflag.BoolP("verbose", "v", false, "enable verbose logging")
 	outputFile := pflag.StringP("output", "j", "", "path to the json output file")
 
+	pflag.Usage = func() {
+		println("Usage: apihunter [flags]")
+		pflag.PrintDefaults()
+	}
 	pflag.Parse()
 	log.Setup(*verbose)
+
+	if *org == "" {
+		pflag.Usage()
+		return
+	}
 
 	log.Info.Printf("searching api docs for organisation %q", *org)
 	d := dork.New(*org)
