@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"apihunter/log"
 	"apihunter/must"
 	"errors"
 	"fmt"
@@ -21,6 +22,7 @@ type Result struct {
 func SearchDDG(query string, timeout time.Duration) (string, error) {
 	data := url.Values{}
 	data.Set("q", query)
+	log.Debug.Printf("searching query %q", query)
 
 	req := must.Eval(
 		http.NewRequest(

@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	Info    = log.New(os.Stderr, color.BlueString("[info] "), 0)
+	Info    = log.New(os.Stderr, color.CyanString("[info] "), 0)
 	Error   = log.New(os.Stderr, color.RedString("[error] "), 0)
 	Success = log.New(os.Stderr, color.GreenString("[ok] "), 0)
+	Debug   = log.New(os.Stderr, color.BlueString("[debug] "), 0)
 )
 
 func Setup(verbose bool) {
