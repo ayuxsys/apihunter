@@ -11,6 +11,6 @@ func TestParseDDG(t *testing.T) {
 		</a>
 	</h2>`
 
-	res := ParseDDG(html)
+	res := parseDDG(html)
 	t.Log(res)
 }
