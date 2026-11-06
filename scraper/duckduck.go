@@ -3,7 +3,6 @@ package scraper
 import (
 	"apihunter/must"
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -32,6 +31,32 @@ func (s *Scraper) SearchDDGHeadless(query string, ctx context.Context) (Output, 
 	s.logOutput(out)
 
 	return out, nil
+}
+
+func parseDDGHeadless(html string) []Result {
+	doc := must.Eval(
+		goquery.NewDocumentFromReader(strings.NewReader(html)),
+	)
+
+	var results []Result
+	doc.Find(`a[data-testid="result-title-a"]`).Each(func(i int, s *goquery.Selection) {
+		title := strings.TrimSpace(s.Text())
+		link, _ := s.Attr("href")
+		results = append(results, Result{Title: title, Href: link})
+	})
+
+	return results
+}
+
+func validateDDGResponse(query, resp string) error {
+	// doesn't contains the query in response so not reliable ig
+	// if strings.Contains(resp, DDGNoResultsPrefix+query) {
+	// 	return errors.New(DDGNoResultsPrefix + query)
+	// }
+	if strings.Contains(resp, "Unfortunately, bots use DuckDuckGo too.") {
+		return CaptchaErr
+	}
+	return nil
 }
 
 // todo: maybe useable with rotating proxy but meh!
@@ -70,43 +95,19 @@ func (s *Scraper) SearchDDGHeadless(query string, ctx context.Context) (Output, 
 //
 // 	return out, nil
 // }
-
-func parseDDGHeadless(html string) []Result {
-	doc := must.Eval(
-		goquery.NewDocumentFromReader(strings.NewReader(html)),
-	)
-
-	var results []Result
-	doc.Find(`a[data-testid="result-title-a"]`).Each(func(i int, s *goquery.Selection) {
-		title := strings.TrimSpace(s.Text())
-		link, _ := s.Attr("href")
-		results = append(results, Result{Title: title, Href: link})
-	})
-
-	return results
-}
-
-func parseDDG(resp string) []Result {
-	doc := must.Eval(
-		goquery.NewDocumentFromReader(strings.NewReader(resp)),
-	)
-
-	var results []Result
-	doc.Find("h2.result__title a.result__a").Each(func(i int, s *goquery.Selection) {
-		title := strings.TrimSpace(s.Text())
-		link, _ := s.Attr("href")
-		results = append(results, Result{Title: title, Href: link})
-	})
-
-	return results
-}
-
-func validateDDGResponse(query, resp string) error {
-	if strings.Contains(resp, DDGNoResultsPrefix+query) {
-		return errors.New(DDGNoResultsPrefix + query)
-	}
-	if strings.Contains(resp, "Unfortunately, bots use DuckDuckGo too.") {
-		return CaptchaErr
-	}
-	return nil
-}
+//
+//
+// func parseDDG(resp string) []Result {
+// 	doc := must.Eval(
+// 		goquery.NewDocumentFromReader(strings.NewReader(resp)),
+// 	)
+//
+// 	var results []Result
+// 	doc.Find("h2.result__title a.result__a").Each(func(i int, s *goquery.Selection) {
+// 		title := strings.TrimSpace(s.Text())
+// 		link, _ := s.Attr("href")
+// 		results = append(results, Result{Title: title, Href: link})
+// 	})
+//
+// 	return results
+// }

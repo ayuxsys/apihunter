@@ -37,7 +37,7 @@ func NewCmdi() *Cmdi {
 	pflag.StringVarP(&cmdi.orgList, "list", "l", "", "file containing a list of organisations name to hunt api collection for")
 	pflag.BoolVarP(&cmdi.verbose, "verbose", "v", false, "enable verbose logging")
 	//pflag.BoolVarP(&cmdi.headless, "headless", "b", false, "use an headless browser while scraping")
-	pflag.BoolVarP(&cmdi.hideBrowser, "hide-browser", "i", false, "hide browser GUI while scraping")
+	pflag.BoolVarP(&cmdi.hideBrowser, "hide-browser", "i", false, "hide browser GUI while scraping (leads to captcha err)")
 	pflag.StringVarP(&cmdi.out.file, "output", "o", "", "path to the output file (note: can only use one output mode at a time)")
 	pflag.BoolVarP(&cmdi.out.jsonl, "json", "j", false, "enable jsonl output")
 	pflag.BoolVarP(&cmdi.out.markdown, "md", "m", false, "enable markdown output")
