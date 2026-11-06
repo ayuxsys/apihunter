@@ -1,6 +1,18 @@
 package scraper
 
-import "testing"
+import (
+	"apihunter/must"
+	"embed"
+	"testing"
+)
+
+//go:embed testdata/headless_resp.html
+var testData embed.FS
+
+func TestParseDDGHeadless(t *testing.T) {
+	html := must.Eval(testData.ReadFile("testdata/headless_resp.html"))
+	t.Log(parseDDGHeadless(string(html)))
+}
 
 func TestParseDDG(t *testing.T) {
 	html := `

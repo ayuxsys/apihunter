@@ -4,34 +4,21 @@ import (
 	"apihunter/dork"
 	"apihunter/log"
 	"apihunter/scraper"
-	"bufio"
-	"os"
-	"strings"
 	"time"
 )
 
 func main() {
 	cmdi := NewCmdi()
-	log.Setup(cmdi.Verbose)
-
-	if err := cmdi.Validate(); err != nil {
-		log.Error.Fatal(err)
-	}
-
-	if err := cmdi.Execute(); err != nil {
-		log.Error.Fatal(err)
-	}
+	log.Setup(cmdi.verbose)
+	scraper.SetupLogger(cmdi.verbose)
+	cmdi.Validate()
+	cmdi.Execute()
 }
 
-func (c *Cmdi) Execute() error {
+func (c *Cmdi) Execute() {
 	scraper := &scraper.Scraper{
-		Query:   dork.Postman(c.Org),
-		Queries: c.readOrgsAsDorks(),
 		Opts: scraper.Options{
-			Headless:       c.Headless,
-			ReqTimeoutSec:  time.Duration(c.Timeout) * time.Second,
-			OutputMode:     c.mapOutputMode(),
-			DelayBtwnReqMS: time.Duration(c.Delay) * time.Millisecond,
+			OutputMode: c.mapOutputMode(),
 		},
 	}
 
@@ -39,29 +26,21 @@ func (c *Cmdi) Execute() error {
 		defer scraper.SetupLogTarget(c.out.file)()
 	}
 
-	return scraper.DuckDuckGo()
-}
-
-func (c *Cmdi) readOrgsAsDorks() []string {
-	if c.OrgList == "" {
-		return nil
+	if c.headless {
+		ctx, cancel := scraper.NewChromeDPContext(!c.hideBrowser)
+		defer cancel()
+		if c.org != "" {
+			_, err := scraper.SearchDDGHeadless(dork.Postman(c.org), ctx)
+			if err != nil {
+				log.Error.Fatalf("'scraper.SearchDDGHeadless': %v'", err)
+			}
+		}
+		for _, q := range c.readOrgsAsDorks() {
+			_, err := scraper.SearchDDGHeadless(q, ctx)
+			if err != nil {
+				log.Error.Fatalf("'scraper.SearchDDGHeadless: %v'", err)
+			}
+			time.Sleep(time.Duration(c.delayMS) * time.Millisecond)
+		}
 	}
-	file, err := os.Open(c.OrgList)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	var out []string
-	for scanner.Scan() {
-		org := strings.TrimSpace(scanner.Text())
-		out = append(out, dork.Postman(org))
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Error.Fatal("error reading organisation list file:", err)
-	}
-	return out
 }

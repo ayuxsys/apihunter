@@ -1,21 +1,22 @@
 package scraper
 
 import (
-	"errors"
-	"time"
+	"context"
+
+	"github.com/chromedp/chromedp"
 )
 
 type Scraper struct {
-	Query   string
-	Queries []string
-	Opts    Options
+	Opts Options
 }
 
 type Options struct {
-	Headless       bool
-	ReqTimeoutSec  time.Duration
-	DelayBtwnReqMS time.Duration
-	OutputMode     OutputMode
+	OutputMode OutputMode
+}
+
+type HeadlessOpts struct {
+	ShowBrowser bool
+	Ctx         context.Context
 }
 
 type OutputMode int
@@ -36,8 +37,18 @@ type Result struct {
 }
 
 func (s *Scraper) Validate() error {
-	if len(s.Queries) == 0 && s.Query == "" {
-		return errors.New("no input provided")
-	}
 	return nil
+}
+
+func (s *Scraper) NewChromeDPContext(showBrowser bool) (context.Context, context.CancelFunc) {
+	var opts []chromedp.ContextOption
+
+	if showBrowser {
+		opts = append(opts, chromedp.WithVisibleWindow())
+	}
+
+	return chromedp.NewContext(
+		context.Background(),
+		opts...,
+	)
 }

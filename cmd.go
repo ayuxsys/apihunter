@@ -1,25 +1,25 @@
 package main
 
 import (
+	"apihunter/dork"
+	"apihunter/log"
 	"apihunter/scraper"
-	"errors"
+	"bufio"
+	"os"
+	"strings"
 
 	"github.com/spf13/pflag"
 )
 
-type Results struct {
-	Org     string           `json:"org"`
-	Results []scraper.Result `json:"results"`
-}
-
 type Cmdi struct {
-	out      outputOpts
-	Timeout  int
-	Org      string
-	OrgList  string
-	Verbose  bool
-	Delay    int
-	Headless bool
+	out         outputOpts
+	timeout     int
+	org         string
+	orgList     string
+	verbose     bool
+	delayMS     int
+	headless    bool
+	hideBrowser bool
 }
 
 type outputOpts struct {
@@ -31,12 +31,13 @@ type outputOpts struct {
 func NewCmdi() *Cmdi {
 	cmdi := &Cmdi{}
 
-	pflag.IntVarP(&cmdi.Timeout, "timeout", "t", 5, "timeout in seconds")
-	pflag.StringVarP(&cmdi.Org, "org", "c", "", "organisation name to hunt api collection for")
-	pflag.IntVarP(&cmdi.Delay, "delay", "d", 2000, "delay timeout in milliseconds to wait for while multiple scraping orgs")
-	pflag.StringVarP(&cmdi.OrgList, "list", "l", "", "file containing a list of organisations name to hunt api collection for")
-	pflag.BoolVarP(&cmdi.Verbose, "verbose", "v", false, "enable verbose logging")
-	pflag.BoolVarP(&cmdi.Headless, "headless", "b", false, "use an headless browser while scraping")
+	pflag.IntVarP(&cmdi.timeout, "timeout", "t", 5, "timeout in seconds")
+	pflag.StringVarP(&cmdi.org, "org", "c", "", "organisation name to hunt api collection for")
+	pflag.IntVarP(&cmdi.delayMS, "delay", "d", 2000, "delay timeout in milliseconds to wait for while multiple scraping orgs")
+	pflag.StringVarP(&cmdi.orgList, "list", "l", "", "file containing a list of organisations name to hunt api collection for")
+	pflag.BoolVarP(&cmdi.verbose, "verbose", "v", false, "enable verbose logging")
+	pflag.BoolVarP(&cmdi.headless, "headless", "b", false, "use an headless browser while scraping")
+	pflag.BoolVarP(&cmdi.hideBrowser, "hide-browser", "i", false, "hide browser GUI while scraping")
 	pflag.StringVarP(&cmdi.out.file, "output", "o", "", "path to the output file (note: can only use one output mode at a time)")
 	pflag.BoolVarP(&cmdi.out.jsonl, "json", "j", false, "enable jsonl output")
 	pflag.BoolVarP(&cmdi.out.markdown, "md", "m", false, "enable markdown output")
@@ -50,11 +51,10 @@ func NewCmdi() *Cmdi {
 	return cmdi
 }
 
-func (c *Cmdi) Validate() error {
-	if c.Org == "" && c.OrgList == "" {
-		return errors.New("target organisation name(s) is required")
+func (c *Cmdi) Validate() {
+	if c.org == "" && c.orgList == "" {
+		log.Error.Fatal("target organisation name(s) is required")
 	}
-	return nil
 }
 
 func (c *Cmdi) mapOutputMode() scraper.OutputMode {
@@ -65,4 +65,28 @@ func (c *Cmdi) mapOutputMode() scraper.OutputMode {
 		return scraper.MarkDownOp
 	}
 	return scraper.MarkDownOp // default (todo: add pretty output)
+}
+
+func (c *Cmdi) readOrgsAsDorks() []string {
+	if c.orgList == "" {
+		return nil
+	}
+	file, err := os.Open(c.orgList)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	var out []string
+	for scanner.Scan() {
+		org := strings.TrimSpace(scanner.Text())
+		out = append(out, dork.Postman(org))
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Error.Fatal("error reading organisation list file:", err)
+	}
+	return out
 }

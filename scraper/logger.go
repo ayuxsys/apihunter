@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	ilogger "apihunter/log"
 	"apihunter/must"
 	"encoding/json"
 	"io"
@@ -9,8 +10,13 @@ import (
 )
 
 var (
+	DebugLog bool
 	opLogger = log.New(os.Stdout, "", 0)
 )
+
+func SetupLogger(verbose bool) {
+	DebugLog = verbose
+}
 
 func (s *Scraper) logOutput(output Output) {
 	switch s.Opts.OutputMode {
@@ -37,4 +43,14 @@ func (s *Scraper) SetupLogTarget(filePath string) func() {
 	opLogger.SetOutput(multiWriter)
 
 	return func() { file.Close() }
+}
+
+func debugLogRes(res string) {
+	if !DebugLog {
+		return
+	}
+	file := must.Eval(os.CreateTemp("", "apihunter-resp-*.html"))
+	defer file.Close()
+	log.New(file, "", 0).Print(res)
+	ilogger.Info.Printf("wrote response body to %q", file.Name())
 }
