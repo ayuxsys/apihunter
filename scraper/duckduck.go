@@ -1,16 +1,11 @@
 package scraper
 
 import (
-	"apihunter/log"
 	"apihunter/must"
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"strings"
-	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/chromedp/chromedp"
@@ -29,47 +24,52 @@ func (s *Scraper) SearchDDGHeadless(query string, ctx context.Context) (Output, 
 	}
 	debugLogRes(html)
 
+	if err := validateDDGResponse(query, html); err != nil {
+		return out, fmt.Errorf("'validateDDGResponse': %w", err)
+	}
+
 	out.Results = parseDDGHeadless(html)
 	s.logOutput(out)
 
-	return out, validateDDGResponse(query, html)
-}
-
-func (s *Scraper) searchDDG(query string, reqTimeoutSec time.Duration) (Output, error) {
-	out := Output{Query: query}
-	data := url.Values{}
-	data.Set("q", query)
-	log.Debug.Printf("searching query %q", query)
-
-	req := must.Eval(
-		http.NewRequest(
-			http.MethodPost,
-			"https://html.duckduckgo.com/html/",
-			strings.NewReader(data.Encode()),
-		),
-	)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:157.0) Gecko/20100101 Firefox/157.0")
-
-	client := http.DefaultClient
-	client.Timeout = reqTimeoutSec
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return out, fmt.Errorf("send request to duckduckgo API: %v", err)
-	}
-	defer resp.Body.Close()
-
-	respBody := string(must.Eval(io.ReadAll(resp.Body)))
-
-	if err := validateDDGResponse(query, respBody); err != nil {
-		return out, err
-	}
-
-	out.Results = parseDDG(respBody)
-
 	return out, nil
 }
+
+// todo: maybe useable with rotating proxy but meh!
+// func (s *Scraper) searchDDG(query string, reqTimeoutSec time.Duration) (Output, error) {
+// 	out := Output{Query: query}
+// 	data := url.Values{}
+// 	data.Set("q", query)
+// 	log.Debug.Printf("searching query %q", query)
+//
+// 	req := must.Eval(
+// 		http.NewRequest(
+// 			http.MethodPost,
+// 			"https://html.duckduckgo.com/html/",
+// 			strings.NewReader(data.Encode()),
+// 		),
+// 	)
+// 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+// 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:157.0) Gecko/20100101 Firefox/157.0")
+//
+// 	client := http.DefaultClient
+// 	client.Timeout = reqTimeoutSec
+//
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return out, fmt.Errorf("send request to duckduckgo API: %v", err)
+// 	}
+// 	defer resp.Body.Close()
+//
+// 	respBody := string(must.Eval(io.ReadAll(resp.Body)))
+//
+// 	if err := validateDDGResponse(query, respBody); err != nil {
+// 		return out, err
+// 	}
+//
+// 	out.Results = parseDDG(respBody)
+//
+// 	return out, nil
+// }
 
 func parseDDGHeadless(html string) []Result {
 	doc := must.Eval(

@@ -12,13 +12,13 @@ import (
 )
 
 type Cmdi struct {
-	out         outputOpts
-	timeout     int
-	org         string
-	orgList     string
-	verbose     bool
-	delayMS     int
-	headless    bool
+	out outputOpts
+	//	timeout     int
+	org     string
+	orgList string
+	verbose bool
+	delayMS int
+	// headless    bool
 	hideBrowser bool
 }
 
@@ -31,12 +31,12 @@ type outputOpts struct {
 func NewCmdi() *Cmdi {
 	cmdi := &Cmdi{}
 
-	pflag.IntVarP(&cmdi.timeout, "timeout", "t", 5, "timeout in seconds")
+	//pflag.IntVarP(&cmdi.timeout, "timeout", "t", 5, "timeout in seconds")
 	pflag.StringVarP(&cmdi.org, "org", "c", "", "organisation name to hunt api collection for")
 	pflag.IntVarP(&cmdi.delayMS, "delay", "d", 2000, "delay timeout in milliseconds to wait for while multiple scraping orgs")
 	pflag.StringVarP(&cmdi.orgList, "list", "l", "", "file containing a list of organisations name to hunt api collection for")
 	pflag.BoolVarP(&cmdi.verbose, "verbose", "v", false, "enable verbose logging")
-	pflag.BoolVarP(&cmdi.headless, "headless", "b", false, "use an headless browser while scraping")
+	//pflag.BoolVarP(&cmdi.headless, "headless", "b", false, "use an headless browser while scraping")
 	pflag.BoolVarP(&cmdi.hideBrowser, "hide-browser", "i", false, "hide browser GUI while scraping")
 	pflag.StringVarP(&cmdi.out.file, "output", "o", "", "path to the output file (note: can only use one output mode at a time)")
 	pflag.BoolVarP(&cmdi.out.jsonl, "json", "j", false, "enable jsonl output")

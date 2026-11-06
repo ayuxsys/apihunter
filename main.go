@@ -26,21 +26,21 @@ func (c *Cmdi) Execute() {
 		defer scraper.SetupLogTarget(c.out.file)()
 	}
 
-	if c.headless {
-		ctx, cancel := scraper.NewChromeDPContext(!c.hideBrowser)
-		defer cancel()
-		if c.org != "" {
-			_, err := scraper.SearchDDGHeadless(dork.Postman(c.org), ctx)
-			if err != nil {
-				log.Error.Fatalf("'scraper.SearchDDGHeadless': %v'", err)
-			}
-		}
-		for _, q := range c.readOrgsAsDorks() {
-			_, err := scraper.SearchDDGHeadless(q, ctx)
-			if err != nil {
-				log.Error.Fatalf("'scraper.SearchDDGHeadless: %v'", err)
-			}
-			time.Sleep(time.Duration(c.delayMS) * time.Millisecond)
+	//if c.headless {
+	ctx, cancel := scraper.NewChromeDPContext(!c.hideBrowser)
+	defer cancel()
+	if c.org != "" {
+		_, err := scraper.SearchDDGHeadless(dork.Postman(c.org), ctx)
+		if err != nil {
+			log.Error.Fatalf("'scraper.SearchDDGHeadless': %v'", err)
 		}
 	}
+	for _, q := range c.readOrgsAsDorks() {
+		_, err := scraper.SearchDDGHeadless(q, ctx)
+		if err != nil {
+			log.Error.Fatalf("'scraper.SearchDDGHeadless: %v'", err)
+		}
+		time.Sleep(time.Duration(c.delayMS) * time.Millisecond)
+	}
+	//}
 }
