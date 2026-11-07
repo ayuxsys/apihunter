@@ -1,12 +1,8 @@
 package main
 
 import (
-	"apihunter/dork"
 	"apihunter/log"
 	"apihunter/scraper"
-	"bufio"
-	"os"
-	"strings"
 
 	"github.com/spf13/pflag"
 )
@@ -14,10 +10,11 @@ import (
 type Cmdi struct {
 	out outputOpts
 	//	timeout     int
-	org      string
-	orgList  string
-	verbose  bool
-	delaySec int
+	org         string
+	orgList     string
+	verbose     bool
+	delaySec    int
+	randomDelay string
 	// headless    bool
 	hideBrowser bool
 }
@@ -35,9 +32,10 @@ func NewCmdi() *Cmdi {
 	pflag.StringVarP(&cmdi.org, "org", "c", "", "organisation name to hunt api collection for")
 	pflag.IntVarP(&cmdi.delaySec, "delay", "d", 5, "delay timeout in seconds to wait for while multiple scraping orgs")
 	pflag.StringVarP(&cmdi.orgList, "list", "l", "", "file containing a list of organisations name to hunt api collection for")
+	pflag.StringVarP(&cmdi.randomDelay, "random", "r", "", "use random delay between requests in seconds (min,max)")
 	pflag.BoolVarP(&cmdi.verbose, "verbose", "v", false, "enable verbose logging")
 	//pflag.BoolVarP(&cmdi.headless, "headless", "b", false, "use an headless browser while scraping")
-	pflag.BoolVarP(&cmdi.hideBrowser, "hide-browser", "i", false, "hide browser GUI while scraping (leads to captcha err)")
+	pflag.BoolVarP(&cmdi.hideBrowser, "hide-browser", "i", false, "hide browser GUI while scraping (leads to captcha err better use 'xvfb')")
 	pflag.StringVarP(&cmdi.out.file, "output", "o", "", "path to the output file (note: can only use one output mode at a time)")
 	pflag.BoolVarP(&cmdi.out.jsonl, "json", "j", false, "enable jsonl output")
 	pflag.BoolVarP(&cmdi.out.markdown, "md", "m", false, "enable markdown output")
@@ -65,28 +63,4 @@ func (c *Cmdi) mapOutputMode() scraper.OutputMode {
 		return scraper.MarkDownOp
 	}
 	return scraper.MarkDownOp // default (todo: add pretty output)
-}
-
-func (c *Cmdi) readOrgsAsDorks() []string {
-	if c.orgList == "" {
-		return nil
-	}
-	file, err := os.Open(c.orgList)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	var out []string
-	for scanner.Scan() {
-		org := strings.TrimSpace(scanner.Text())
-		out = append(out, dork.Postman(org))
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Error.Fatal("error reading organisation list file:", err)
-	}
-	return out
 }

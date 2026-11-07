@@ -11,6 +11,10 @@ import (
 )
 
 func (s *Scraper) SearchDDGHeadless(query string, ctx context.Context) (Output, error) {
+	if query == "" {
+		return Output{}, nil
+	}
+
 	out := Output{Query: query}
 
 	if err := chromedp.Do(ctx, chromedp.Navigate("https://duckduckgo.com/?q="+query)); err != nil {
@@ -23,7 +27,7 @@ func (s *Scraper) SearchDDGHeadless(query string, ctx context.Context) (Output, 
 	}
 	debugLogRes(html)
 
-	if err := validateDDGResponse(query, html); err != nil {
+	if err := validateDDGResponse(html); err != nil {
 		return out, fmt.Errorf("'validateDDGResponse': %w", err)
 	}
 
@@ -48,7 +52,7 @@ func parseDDGHeadless(html string) []Result {
 	return results
 }
 
-func validateDDGResponse(query, resp string) error {
+func validateDDGResponse(resp string) error {
 	// doesn't contains the query in response so not reliable ig
 	// if strings.Contains(resp, DDGNoResultsPrefix+query) {
 	// 	return errors.New(DDGNoResultsPrefix + query)
