@@ -44,6 +44,6 @@ func (c *Cmdi) Execute() {
 			}
 			log.Error.Fatalf("'scraper.SearchDDGHeadless: %v'", err)
 		}
-		time.Sleep(time.Duration(c.delayMS) * time.Millisecond)
+		time.Sleep(time.Duration(c.delaySec) * time.Second)
 	}
 }
